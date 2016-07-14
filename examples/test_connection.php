@@ -2,17 +2,23 @@
 
 require_once __DIR__ . '/../src/LightenbodyService.php';
 
+/**
+ * An example file showing how to perform a connection against the lightenbody's API.
+ * To obtain API credentials login into your BackOffice account and under Studio > Security
+ * generate a new API key.
+ */
+
 /** @var string $uuid */
-$uuid = '2802127090';
+$uuid = 'empty';
 
 /** @var string $apiGuid */
-$apiGuid = '113EC7C3-9BDA-CE8A-3B41-F66B824EA4B7';
+$apiGuid = 'empty';
 
 /** @var string $apiKey */
-$apiKey = '97142012';
+$apiKey = 'empty';
 
 /** @var string $apiSource */
-$apiSource = 'wordpress';
+$apiSource = 'empty';
 
 /** @var bool $isTest */
 $isTest = true;
