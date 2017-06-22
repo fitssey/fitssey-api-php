@@ -2,10 +2,10 @@
 
 require_once __DIR__ . '/../src/LightenbodyService.php';
 
-$uuid = 'lightenbody-pl';
-$apiGuid = 'D033F77E-E5C9-74C8-6BDF-5F18E96124DE';
-$apiKey = '1782114241';
-$apiSource = 'wordpress';
+$uuid = 'your_studio_uuid';
+$apiGuid = 'your_api_guid';
+$apiKey = 'your_api_key';
+$apiSource = 'your_api_source'; // optional
 
 /** @var bool $isTest Determines whether the connection is a test or not (use false in production!) */
 $isTest = true;
