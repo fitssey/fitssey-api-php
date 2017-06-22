@@ -1,11 +1,53 @@
 <?php
 
 /**
+ * Class NotFoundStudioUuidException
+ *
+ * An exception class thrown when no Studio UUID is present.
+ */
+class NotFoundStudioUuidException extends \Exception
+{
+    public function __construct($message = "Studio UUID must be set before making any requests!", $code = 0, Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+}
+
+/**
+ * Class NotFoundStudioApiKeyException
+ *
+ * An exception class thrown when no API KEY is present.
+ */
+class NotFoundStudioApiKeyException extends \Exception
+{
+    public function __construct($message = "API KEY must be set before making any requests!", $code = 0, Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+}
+
+/**
+ * Class NotFoundStudioApiGuidException
+ *
+ * An exception class thrown when no API GUID is present.
+ */
+class NotFoundStudioApiGuidException extends \Exception
+{
+    public function __construct($message = "API GUID must be set before making any requests!", $code = 0, Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+}
+
+/**
  * Class LightenbodyService
  *
- * This class helps connecting to lightenbody Service.
+ * This class helps to connect to lightenbody's api.
  *
- * It consists of a several methods to exchange data from and to lightenbody Service.
+ * Before you start, you have to obtain api credentials from your lightenbody's account.
+ * The required credentials consist of `uuid`, `api-guid`, `api-key`.
+ * The additional `api-source` is not mandatory. It helps to determine where the request
+ * is coming from.
  *
  * PHP version 5
  *
@@ -14,35 +56,35 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * @author     Grzegorz Tomasiak <grzegorz@lightenbody.com>
- * @copyright  (c) 2016 lightenbody
+ * @copyright  (c) 2017 lightenbody
  * @license    http://www.gnu.org/licenses/gpl-2.0.html GPL v2.0 or later
- * @version    0.12
+ * @version    0.20
  * @link       http://lightenbody.com
  */
 class LightenbodyService
 {
-    const LIGHTENBODY_PROD_HOST = 'http://studio.lightenbody.com';
-    const LIGHTENBODY_DEV_HOST = 'http://studio-dev.lightenbody.com';
-
+    private $apiVersion = 2;
+    private $apiUrl = "https://studio.lightenbody.com/<uuid>/api/v<version>/public";
     private $apiKey;
     private $apiSource;
     private $uuid;
     private $responseCode;
-    private $debug = false;
-    private $host;
-    private $url;
 
     /**
-     * LightenbodyService constructor requires a several variables to be able to connect to the Service.
-     * Each of the required parameters can be obtain in your Studio settings.
+     * LightenbodyService constructor requires a several variables to be able to connect to the api.
+     * Each of the required parameters can be obtain in your lightenbody's account.
      *
      * @param string $uuid Unique Identifier (UUID) of the Studio.
      * @param string $apiGuid Globally Unique Identifier (GUID) of the Api credentials.
      * @param string $apiKey Key retrieved from the API credentials.
      * @param string $apiSource Source retrieved from the Api credentials.
      */
-    public function __construct($uuid, $apiGuid, $apiKey, $apiSource)
+    public function __construct($uuid, $apiGuid, $apiKey, $apiSource = null)
     {
+        // construct the api url
+        $this->apiUrl = str_replace('<uuid>', $uuid, $this->apiUrl);
+        $this->apiUrl = str_replace('<version>', $this->apiVersion, $this->apiUrl);
+
         $this->uuid = $uuid;
         $this->apiGuid = $apiGuid;
         $this->apiKey = $apiKey;
@@ -50,78 +92,128 @@ class LightenbodyService
     }
 
     /**
-     * Returns a Schedule of the Studio by the given range of dates and filters.
-     *
-     * @param DateTime $startDate Start date of the Schedule.
-     * @param DateTime $endDate End date of the Schedule.
-     * @param array $filters An array with filters.
-     * @see http://studio.lightenbody.com/api/doc#post--{uuid}-api-schedule
-     * @return array
-     */
-    public function getSchedule(\DateTime $startDate, \DateTime $endDate, array $filters = array())
-    {
-        $data = array(
-            'filters'   => http_build_query($filters),
-            'startDate' => $startDate->format('Y-m-d'),
-            'endDate'   => $endDate->format('Y-m-d')
-        );
-        
-        return $this->call('/api/schedule', $data);
-    }
-
-    /**
-     * Performs a test connection against the Api.
-     * It returns 200 OK status whether the connection was successful.
-     *
-     * @return array
-     */
-    public function testConnection()
-    {
-        $result = $this->call('/api/test');
-        return $result;
-    }
-
-    /**
-     * Internal method that calls the Service of lightenbody with the given data.
-     *
-     * @param string $endpoint Api endpoint.
-     * @param array $data An array with data to send along with the call.
+     * @param $endpoint
+     * @param array $data
      * @return array|mixed|object
      */
-    private function call($endpoint, array $data = array())
+    public function get($endpoint, array $data = array())
     {
-        // determine the host
-        $this->host = ($this->debug) ? self::LIGHTENBODY_DEV_HOST : self::LIGHTENBODY_PROD_HOST;
-
-        // compose the url
-        $this->url = $this->host . '/' . $this->uuid . $endpoint;
-        
-        // setup the curl
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-            "X-lightenbody-api-key: $this->apiKey",
-            "X-lightenbody-api-source: $this->apiSource",
-            "X-lightenbody-api-guid: $this->apiGuid"
-        ));
-        curl_setopt($curl, CURLOPT_URL, $this->url);
-        curl_setopt($curl, CURLOPT_POST, 1);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($curl, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
-
-        $result = curl_exec($curl);
-        $info = curl_getinfo($curl);
-        $this->setResponseCode($info['http_code']);
-
-        $data = json_decode($result);
-
-        if($data) return $data;
-        else return $result;
+        return $this->call($endpoint, 'get', $data);
     }
 
     /**
-     * Returns the Api Key.
-     *
+     * @param $endpoint
+     * @param array $data
+     * @return array|mixed|object
+     */
+    public function post($endpoint, array $data = array())
+    {
+        return $this->call($endpoint, 'post', $data);
+    }
+
+    /**
+     * @param $endpoint
+     * @param array $data
+     * @return array|mixed|object
+     */
+    public function put($endpoint, array $data = array())
+    {
+        return $this->call($endpoint, 'put', $data);
+    }
+
+    /**
+     * @param $endpoint
+     * @param array $data
+     * @return array|mixed|object
+     */
+    public function patch($endpoint, array $data = array())
+    {
+        return $this->call($endpoint, 'patch', $data);
+    }
+
+    /**
+     * @param $endpoint
+     * @param array $data
+     * @return array|mixed|object
+     */
+    public function delete($endpoint, array $data =  array())
+    {
+        return $this->call($endpoint, 'delete', $data);
+    }
+
+    /**
+     * @param string $endpoint Api endpoint.
+     * @param string $httpVerb Request method.
+     * @param array $data An array with data to send along with the call.
+     * @return array|mixed|object
+     * @throws \Exception
+     */
+    public function call($endpoint, $httpVerb, array $data = array())
+    {
+        // compose the url
+        $this->apiUrl = $this->apiUrl . '/' . ltrim($endpoint, '/');
+
+        if(!$this->uuid) throw new NotFoundStudioUuidException();
+        if(!$this->apiKey) throw new NotFoundStudioApiGuidException();
+        if(!$this->apiGuid) throw new NotFoundStudioApiGuidException();
+
+        return $this->request($this->apiUrl, $httpVerb, $data);
+    }
+
+    /**
+     * @param $url
+     * @param $httpVerb
+     * @param array $data
+     * @param int $timeout
+     * @return array|mixed|object
+     * @throws Exception
+     */
+    private function request($url, $httpVerb, array $data = array(), $timeout = 15)
+    {
+        if(function_exists('curl_init') && function_exists('curl_setopt'))
+        {
+            $httpVerb = strtoupper($httpVerb);
+
+            $headers = array(
+                "X-lightenbody-api-key: $this->apiKey",
+                "X-lightenbody-api-source: $this->apiSource",
+                "X-lightenbody-api-guid: $this->apiGuid"
+            );
+
+            // setup the curl
+            $curl = curl_init();
+            curl_setopt($curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_HTTPHEADER, array_merge($headers, array()));
+            curl_setopt($curl, CURLOPT_USERAGENT, "$this->uuid/lightenbody-api:v$this->apiVersion");
+            curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
+            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $httpVerb);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($curl, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
+
+            if(!empty($data))
+            {
+                curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+            }
+
+            $result = curl_exec($curl);
+            $info = curl_getinfo($curl);
+
+            // assign the response code
+            $this->setResponseCode($info['http_code']);
+
+            // if error found, throw the exception
+            if($error = curl_error($curl))
+            {
+                throw new \Exception($error);
+            }
+
+            return json_decode($result) ?: $result;
+        }
+
+        throw new \RuntimeException('curl extension is not installed!');
+    }
+
+    /**
      * @return string
      */
     public function getApiKey()
@@ -130,8 +222,14 @@ class LightenbodyService
     }
 
     /**
-     * Returns the Api Source.
-     *
+     * @return string
+     */
+    public function getApiUrl()
+    {
+        return $this->apiUrl;
+    }
+
+    /**
      * @return string
      */
     public function getApiSource()
@@ -140,7 +238,6 @@ class LightenbodyService
     }
 
     /**
-     * Returns Studio Unique Identifier (UUID)
      * @return string
      */
     public function getUuid()
@@ -149,8 +246,6 @@ class LightenbodyService
     }
 
     /**
-     * Returns the last response code of the call.
-     *
      * @return integer
      */
     public function getResponseCode()
@@ -159,41 +254,12 @@ class LightenbodyService
     }
 
     /**
-     * Sets the response code internally.
-     *
      * @param $code
      * @return $this
      */
     private function setResponseCode($code)
     {
         $this->responseCode = $code;
-        return $this;
-    }
-
-    public function getHost()
-    {
-        return $this->host;
-    }
-    
-    public function getUrl()
-    {
-        return $this->url;
-    }
-
-    public function getIsDebug()
-    {
-        return $this->debug;
-    }
-
-    public function setIsDebug($debug)
-    {
-        $this->debug = $debug;
-        return $this;
-    }
-    
-    public function debug()
-    {
-        $this->debug = true;
         return $this;
     }
 }
