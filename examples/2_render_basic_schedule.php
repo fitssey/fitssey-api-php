@@ -3,10 +3,10 @@
 require_once __DIR__ . '/../src/LightenbodyService.php';
 
 $uuid = 'your_studio_uuid';
+$apiSource = 'your_api_source';
 $apiGuid = 'your_api_guid';
 $apiKey = 'your_api_key';
-$apiSource = 'your_api_source'; // optional
-$locale = 'en_EN'; // ISO-8859-1 format, e.g. en_EN, en_US, pl_PL, fr_FR, nl_NL etc.
+$locale = 'pl_PL'; // ISO-8859-1 format, e.g. en_EN, en_US, pl_PL, fr_FR, nl_NL etc.
 
 /** @var \DateTime $startDate Enter start date of the schedule */
 $startDate = new \DateTime();
@@ -89,7 +89,12 @@ $responseCode = $lightenbodyService->getResponseCode();
                         <td><?php echo $scheduleEvent->room->location->name->$locale->value; ?></td>
                         <td><?php echo $scheduleEvent->onlineCapacity; ?></td>
                         <td>
-                            <?php $url = sprintf('https://studio.lightenbody.com/%s/frontoffice,iframe/delegate?referenceId=%s&_locale=%s&lightenbody-api-source=%s', $uuid, $scheduleEvent->referenceId, $locale, $apiSource); ?>
+						    <?php $parameters = http_build_query([
+								'referenceIds'              => [$scheduleEvent->referenceId],
+                                '_locale'                   => $locale,
+                                'lightenbody-api-source'    => $apiSource
+                            ]); ?>
+                            <?php $url = sprintf('https://studio.lightenbody.com/%s/frontoffice,iframe/delegate?%s', $uuid, $parameters); ?>
                             <!-- you can process the link via iframe or popup -->
                             <a href="<?php echo $url; ?>">Book now</a>
                         </td>

@@ -3,12 +3,9 @@
 require_once __DIR__ . '/../src/LightenbodyService.php';
 
 $uuid = 'your_studio_uuid';
+$apiSource = 'your_api_source';
 $apiGuid = 'your_api_guid';
 $apiKey = 'your_api_key';
-$apiSource = 'your_api_source'; // optional
-
-/** @var bool $isTest Determines whether the connection is a test or not (use false in production!) */
-$isTest = true;
 
 // construct the service
 $lightenbodyService = new LightenbodyService($uuid, $apiGuid, $apiKey, $apiSource);
