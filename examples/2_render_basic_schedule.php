@@ -61,7 +61,7 @@ $responseCode = $lightenbodyService->getResponseCode();
     <?php foreach($schedule as $item): ?>
 
         <!-- a class variable always contains 'date' property -->
-        <h2><?php echo $item->date; ?></h2>
+        <h3><?php echo $item->date; ?></h3>
 
         <!-- now we have to check if the given date contains any schedule -->
         <?php if(isset($item->scheduleEvents)): ?>
