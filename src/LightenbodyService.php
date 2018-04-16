@@ -64,8 +64,8 @@ class NotFoundStudioApiGuidException extends \Exception
 class LightenbodyService
 {
     private $apiVersion = 2;
-    private $baseUrl = 'https://studio.lightenbody.com';
-    private $apiUrl = 'https://studio.lightenbody.com/<uuid>/api/v<version>/public';
+    private $baseUrl = 'https://app.fitssey.com';
+    private $apiUrl = 'https://app.fitssey.com/<uuid>/api/v<version>/public';
     private $apiGuid;
     private $apiKey;
     private $apiSource;
